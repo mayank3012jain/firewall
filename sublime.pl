@@ -1,21 +1,31 @@
 populate_rule_list(Adapter_number_packet, Port_number_packet, Reject_list, Drop_list):-
     %The name of the text file in which rules are to be stored is 'rules_set.txt'
     load_file('rules_set.txt', Stream),
-    read_file(Stream, Adapter_number_packet, Port_number_packet, Reject_list, Drop_list),
+    read_file(Stream, Adapter_number_packet, Port_number_packet, Reject_list1, Drop_list1, Status),
+    ((\+ Status == 'match')-> (load_file('rules_set.txt', Stream1),
+        read_file(Stream1, 'any', Port_number_packet, Reject_list2, Drop_list2, Status),
+        Reject_list = Reject_list2,
+        Drop_list = Drop_list2);
+        (
+            Reject_list = Reject_list1,
+            Drop_list = Drop_list1)),
     format('~w is reject. ~n~w is drop.', [Reject_list, Drop_list]).
 
 
-read_file(Stream, Adapter_number_packet, Port_number_packet, Reject_list, Drop_list):-
-    read(Stream, Predicate),
+read_file(Stream, Adapter_number_packet, Port_number_packet, Reject_list, Drop_list, Status):-
+    at_end_of_stream(Stream)->(Reject_list = [], Drop_list = []);
+    (read(Stream, Predicate),
     ((Predicate == 'adapter') ->(
         read(Stream, Adapter_number_rule),
         (Adapter_number_rule == Adapter_number_packet ->
-            read_port(Stream, Port_number_packet, Reject_list, Drop_list);
-            read_file(Stream, Adapter_number_packet, Port_number_packet, Reject_list, Drop_list)
+            (
+                Status = 'match',
+                read_port(Stream, Port_number_packet, Reject_list, Drop_list));
+            read_file(Stream, Adapter_number_packet, Port_number_packet, Reject_list, Drop_list, Status)
         )
         );
-        read_file(Stream, Adapter_number_packet, Port_number_packet, Reject_list, Drop_list)
-    ).
+        read_file(Stream, Adapter_number_packet, Port_number_packet, Reject_list, Drop_list, Status)
+    )).
 
 
 read_port(Stream, Port_number_packet, Reject_list, Drop_list):-
