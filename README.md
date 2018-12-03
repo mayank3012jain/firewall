@@ -1,4 +1,4 @@
-A packet filtering firewall implennted in prolog language.
+## Packet filtering firewall implemented in prolog language. ##
 
 ************************************
 Executing the program
